@@ -1,3 +1,4 @@
+#include <chrono>
 #include <vector>
 #include <iostream>
 #include <random>
@@ -20,6 +21,7 @@ void advance_time( const fractal_land& land, pheronome& phen,
 
 int main(int nargs, char* argv[])
 {
+    auto start = std::chrono::steady_clock::now(); // mesure temps
     SDL_Init( SDL_INIT_VIDEO );
     std::size_t seed = 2026; // Graine pour la génération aléatoire ( reproductible )
     const int nb_ants = 5000; // Nombre de fourmis
@@ -48,6 +50,11 @@ int main(int nargs, char* argv[])
         for ( fractal_land::dim_t j = 0; j < land.dimensions(); ++j )  {
             land(i,j) = (land(i,j)-min_val)/delta;
         }
+
+    auto end_init = std::chrono::steady_clock::now(); // mesure temps init
+    auto elapsed_init = end_init - start;
+    std::cout << "Durée initialisation : " << std::chrono::duration<double>(elapsed_init).count() << std::endl;
+
     // Définition du coefficient d'exploration de toutes les fourmis.
     ant::set_exploration_coef(eps);
     // On va créer des fourmis un peu partout sur la carte :
@@ -59,6 +66,10 @@ int main(int nargs, char* argv[])
     // On crée toutes les fourmis dans la fourmilière.
     pheronome phen(land.dimensions(), pos_food, pos_nest, alpha, beta);
 
+    auto end_creation_fourmies = std::chrono::steady_clock::now(); 
+    auto elapsed_fourmies = end_creation_fourmies - start;
+    std::cout << "Durée création fourmies : " << std::chrono::duration<double>(elapsed_fourmies).count() << std::endl;
+
     Window win("Ant Simulation", 2*land.dimensions()+10, land.dimensions()+266);
     Renderer renderer( land, phen, pos_nest, pos_food, ants );
     // Compteur de la quantité de nourriture apportée au nid par les fourmis
@@ -68,6 +79,7 @@ int main(int nargs, char* argv[])
     bool not_food_in_nest = true;
     std::size_t it = 0;
     while (cont_loop) {
+        auto start_boucle = std::chrono::steady_clock::now();
         ++it;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT)
@@ -81,7 +93,11 @@ int main(int nargs, char* argv[])
             not_food_in_nest = false;
         }
         //SDL_Delay(10);
+        auto end_boucle = std::chrono::steady_clock::now(); // mesure temps init
+        auto elapsed_boucle = end_boucle - start_boucle;
+        std::cout << "Durée boucle : " << std::chrono::duration<double>(elapsed_boucle).count() << std::endl;
     }
+    
     SDL_Quit();
     return 0;
 }
