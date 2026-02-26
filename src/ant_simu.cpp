@@ -1,3 +1,4 @@
+#include <chrono>
 #include <vector>
 #include <iostream>
 #include <random>
@@ -28,6 +29,7 @@ void advance_time( const fractal_land& land, pheronome& phen,
 
 int main(int nargs, char* argv[])
 {
+    auto start = std::chrono::steady_clock::now(); // mesure temps
     SDL_Init( SDL_INIT_VIDEO );
     std::size_t seed = 2026; // Graine pour la génération aléatoire ( reproductible )
     const int nb_ants = 5000; // Nombre de fourmis
@@ -95,6 +97,7 @@ int main(int nargs, char* argv[])
     double vapo_time=0 ; 
 
     while (cont_loop) {
+        auto start_boucle = std::chrono::steady_clock::now();
         ++it;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT)
@@ -131,7 +134,11 @@ int main(int nargs, char* argv[])
             not_food_in_nest = false;
         }
         //SDL_Delay(10);
+        auto end_boucle = std::chrono::steady_clock::now(); // mesure temps init
+        auto elapsed_boucle = end_boucle - start_boucle;
+        std::cout << "Durée boucle : " << std::chrono::duration<double>(elapsed_boucle).count() << std::endl;
     }
+    
     SDL_Quit();
    
 
