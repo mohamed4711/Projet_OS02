@@ -1,7 +1,0 @@
-CompileFlags:
-  CompilationDatabase: .
-  Compiler: g++
-  Add:
-    - -std=c++17
-    - -fopenmp
-    - -I./src
