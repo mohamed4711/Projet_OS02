@@ -30,9 +30,9 @@ public:
                   const position_t& pos_food, const position_t& pos_nest, std::size_t& cpteur_food );
 
 private:
-    static double m_eps; // Coefficient d'exploration commun à toutes les fourmis.
-    std::size_t m_seed;
-    state m_state;
+    static double m_eps ; // Coefficient d'exploration commun à toutes les fourmis.
+    std::size_t m_seed ;
+    state m_state      ;
     position_t m_position;
 };
 
