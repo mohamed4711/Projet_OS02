@@ -1,0 +1,27 @@
+[
+  {
+    "directory": ".",
+    "command": "g++ -fopenmp -std=c++17 -O3 -march=native -Wall -c src/ant.cpp -o src/ant.o",
+    "file": "src/ant.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "g++ -fopenmp -std=c++17 -O3 -march=native -Wall -c src/ant_simu.cpp -o src/ant_simu.o",
+    "file": "src/ant_simu.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "g++ -fopenmp -std=c++17 -O3 -march=native -Wall -c src/fractal_land.cpp -o src/fractal_land.o",
+    "file": "src/fractal_land.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "g++ -fopenmp -std=c++17 -O3 -march=native -Wall -c src/renderer.cpp -o src/renderer.o",
+    "file": "src/renderer.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "g++ -fopenmp -std=c++17 -O3 -march=native -Wall -c src/window.cpp -o src/window.o",
+    "file": "src/window.cpp"
+  }
+]

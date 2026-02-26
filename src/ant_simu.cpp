@@ -6,15 +6,23 @@
 #include "pheronome.hpp"
 # include "renderer.hpp"
 # include "window.hpp"
-# include "rand_generator.hpp"
+# include "../src/rand_generator.hpp"
+#include<stdio.h>
+#include <chrono>
 
 void advance_time( const fractal_land& land, pheronome& phen, 
                    const position_t& pos_nest, const position_t& pos_food,
-                   std::vector<ant>& ants, std::size_t& cpteur )
-{
+                   std::vector<ant>& ants, std::size_t& cpteur, double & vapo_time, double& advance_time  )
+{   auto t1 = std::chrono::high_resolution_clock::now(); 
+
     for ( size_t i = 0; i < ants.size(); ++i )
-        ants[i].advance(phen, land, pos_food, pos_nest, cpteur);
-    phen.do_evaporation();
+        ants[i].advance(phen, land, pos_food, pos_nest, cpteur);// calcule le chemin et met a jour pheronome 
+    auto t2 =std::chrono::high_resolution_clock::now(); 
+    advance_time+= std::chrono::duration<double>(t2-t1 ).count(); 
+        phen.do_evaporation();
+    auto t3 = std::chrono::high_resolution_clock::now(); 
+    vapo_time+= std::chrono::duration<double>(t3-t2).count(); 
+
     phen.update();
 }
 
@@ -33,6 +41,7 @@ int main(int nargs, char* argv[])
     position_t pos_food{500,500};
     //const int i_food = 500, j_food = 500;    
     // Génération du territoire 512 x 512 ( 2*(2^8) par direction )
+    auto start= std::chrono::high_resolution_clock::now(); 
     fractal_land land(8,2,1.,1024);
     double max_val = 0.0;
     double min_val = 0.0;
@@ -41,6 +50,7 @@ int main(int nargs, char* argv[])
             max_val = std::max(max_val, land(i,j));
             min_val = std::min(min_val, land(i,j));
         }
+
     double delta = max_val - min_val;
     /* On redimensionne les valeurs de fractal_land de sorte que les valeurs
     soient comprises entre zéro et un */
@@ -48,9 +58,16 @@ int main(int nargs, char* argv[])
         for ( fractal_land::dim_t j = 0; j < land.dimensions(); ++j )  {
             land(i,j) = (land(i,j)-min_val)/delta;
         }
+    
+   auto end =std::chrono::high_resolution_clock::now();
+   double duration  = std::chrono::duration<double >(end- start).count(); 
+   printf( "Generation fractal  %f \n",duration); 
+
     // Définition du coefficient d'exploration de toutes les fourmis.
     ant::set_exploration_coef(eps);
     // On va créer des fourmis un peu partout sur la carte :
+    auto start1=std::chrono::high_resolution_clock::now(); 
+
     std::vector<ant> ants;
     ants.reserve(nb_ants);
     auto gen_ant_pos = [&land, &seed] () { return rand_int32(0, land.dimensions()-1, seed); };
@@ -58,7 +75,12 @@ int main(int nargs, char* argv[])
         ants.emplace_back(position_t{gen_ant_pos(),gen_ant_pos()}, seed);
     // On crée toutes les fourmis dans la fourmilière.
     pheronome phen(land.dimensions(), pos_food, pos_nest, alpha, beta);
+    auto end1= std::chrono::high_resolution_clock::now();
 
+    double duration1 = std::chrono::duration<double >(end1- start1).count(); 
+    printf( "genaration fourmis %f \n ",duration1); 
+
+     
     Window win("Ant Simulation", 2*land.dimensions()+10, land.dimensions()+266);
     Renderer renderer( land, phen, pos_nest, pos_food, ants );
     // Compteur de la quantité de nourriture apportée au nid par les fourmis
@@ -67,21 +89,51 @@ int main(int nargs, char* argv[])
     bool cont_loop = true;
     bool not_food_in_nest = true;
     std::size_t it = 0;
+    double time_calculating =0 ; 
+    double time_displaying =0; 
+    double advanc_time=0; 
+    double vapo_time=0 ; 
+
     while (cont_loop) {
         ++it;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT)
                 cont_loop = false;
         }
-        advance_time( land, phen, pos_nest, pos_food, ants, food_quantity );
+        auto start2=std::chrono::high_resolution_clock::now(); 
+        advance_time( land, phen, pos_nest, pos_food, ants, food_quantity,vapo_time, advanc_time );
+        auto end2=std::chrono::high_resolution_clock::now(); 
+
+        double duration2  = std::chrono::duration<double >(end2- start2).count(); 
+        time_calculating=time_calculating+duration2; 
+        
         renderer.display( win, food_quantity );
         win.blit();
+
+        auto end3 = std::chrono::high_resolution_clock::now();
+        double duration3=std::chrono::duration<double>(end3-end2 ).count(); 
+        time_displaying=time_displaying+duration3;
+
+
+
         if ( not_food_in_nest && food_quantity > 0 ) {
-            std::cout << "La première nourriture est arrivée au nid a l'iteration " << it << std::endl;
+             std::cout << "La première nourriture est arrivée au nid a l'iteration " << it << std::endl;
+             double time_cal_per_it =time_calculating/it;
+             double time_disp_per_ot=time_displaying/it;
+              vapo_time=vapo_time/it ; 
+              advanc_time=advanc_time/it ; 
+
+             std::cout<<"temps advanc_time  ="<<advanc_time<<std::endl;
+             std::cout<<"temps vaporisation  ="<<vapo_time<<std::endl;
+             std::cout<<"temps calcule vapo+advancing  ="<<time_cal_per_it<<std::endl;
+             std::cout<<"time per affichage ="<<time_disp_per_ot<<std::endl; 
+             
             not_food_in_nest = false;
         }
         //SDL_Delay(10);
     }
     SDL_Quit();
+   
+
     return 0;
 }
