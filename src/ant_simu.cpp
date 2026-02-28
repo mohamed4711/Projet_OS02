@@ -9,15 +9,16 @@
 # include "window.hpp"
 # include "../src/rand_generator.hpp"
 #include<stdio.h>
+#include"ant_vectorised.hpp"
 #include <chrono>
 
 void advance_time( const fractal_land& land, pheronome& phen, 
                    const position_t& pos_nest, const position_t& pos_food,
-                   std::vector<ant>& ants, std::size_t& cpteur, double & vapo_time, double& advance_time  )
+                   ant_vectorised& ants , std::size_t& cpteur, double & vapo_time, double& advance_time ,double m_eps )
 {   auto t1 = std::chrono::high_resolution_clock::now(); 
 
-    for ( size_t i = 0; i < ants.size(); ++i )
-        ants[i].advance(phen, land, pos_food, pos_nest, cpteur);// calcule le chemin et met a jour pheronome 
+    for ( size_t i = 0; i < ants.nb_fourmi; ++i )
+      ants.advance(phen,  land, pos_food,  pos_nest,cpteur ,ants,  i , m_eps) ;  // calcule le chemin et met a jour pheronome 
     auto t2 =std::chrono::high_resolution_clock::now(); 
     advance_time+= std::chrono::duration<double>(t2-t1 ).count(); 
         phen.do_evaporation();
@@ -69,12 +70,13 @@ int main(int nargs, char* argv[])
     ant::set_exploration_coef(eps);
     // On va créer des fourmis un peu partout sur la carte :
     auto start1=std::chrono::high_resolution_clock::now(); 
-
-    std::vector<ant> ants;
-    ants.reserve(nb_ants);
+    ant_vectorised ant_colony(nb_ants); 
+    
     auto gen_ant_pos = [&land, &seed] () { return rand_int32(0, land.dimensions()-1, seed); };
-    for ( size_t i = 0; i < nb_ants; ++i )
-        ants.emplace_back(position_t{gen_ant_pos(),gen_ant_pos()}, seed);
+    for ( size_t i = 0; i < nb_ants; ++i ){
+        ant_colony.fourmi_grain[i]=seed; 
+        ant_colony.fourmi_pos[i]=position_t{gen_ant_pos(),gen_ant_pos()};
+    };
     // On crée toutes les fourmis dans la fourmilière.
     pheronome phen(land.dimensions(), pos_food, pos_nest, alpha, beta);
     auto end1= std::chrono::high_resolution_clock::now();
@@ -84,7 +86,7 @@ int main(int nargs, char* argv[])
 
      
     Window win("Ant Simulation", 2*land.dimensions()+10, land.dimensions()+266);
-    Renderer renderer( land, phen, pos_nest, pos_food, ants );
+    Renderer renderer( land, phen, pos_nest, pos_food, ant_colony.fourmi_pos, ant_colony.nb_fourmi );
     // Compteur de la quantité de nourriture apportée au nid par les fourmis
     size_t food_quantity = 0;
     SDL_Event event;
@@ -104,7 +106,7 @@ int main(int nargs, char* argv[])
                 cont_loop = false;
         }
         auto start2=std::chrono::high_resolution_clock::now(); 
-        advance_time( land, phen, pos_nest, pos_food, ants, food_quantity,vapo_time, advanc_time );
+        advance_time( land, phen, pos_nest, pos_food, ant_colony, food_quantity,vapo_time, advanc_time ,eps);
         auto end2=std::chrono::high_resolution_clock::now(); 
 
         double duration2  = std::chrono::duration<double >(end2- start2).count(); 
