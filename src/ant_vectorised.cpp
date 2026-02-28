@@ -3,7 +3,7 @@
 #include "rand_generator.hpp"
 #include "ant_vectorised.hpp" 
 
-double ant::m_eps = 0.;
+
 
 
 void  ant_vectorised::advance( pheronome& phen, const fractal_land& land, const position_t& pos_food, const position_t& pos_nest,
@@ -58,7 +58,7 @@ void  ant_vectorised::advance( pheronome& phen, const fractal_land& land, const 
             is_loaded=false;
         }
         if ( new_pos_ant == pos_food ) {
-            is_loaded=false;
+            is_loaded=true;
         }
 
         Ant_colony.fourmi_etat[id_ant]=is_loaded; 

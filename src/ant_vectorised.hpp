@@ -36,17 +36,17 @@ public:
 ant_vectorised()=default; 
 ant_vectorised(size_t nbfourmi ): nb_fourmi(nbfourmi){
 
-    fourmi_pos.reserve(nbfourmi); 
-    fourmi_grain.reserve(nbfourmi); 
-    fourmi_etat.reserve(nbfourmi); 
+    fourmi_pos.resize(nbfourmi); 
+    fourmi_grain.resize(nbfourmi); 
+    fourmi_etat.resize(nbfourmi, NONCHARGE);
 
 } 
 
 
 
-/*methodes */
- 
 void advance( pheronome& phen, const fractal_land& land, const position_t& pos_food, const position_t& pos_nest,std::size_t& cpteur_food ,  ant_vectorised & Ant_colony ,  int id_ant ,double m_eps) ; 
+/*methodes */
+
 
 /*getters*/
 
@@ -78,6 +78,7 @@ std::vector<int> fourmi_etat ; //taille nb*1
 
 
 };
+
 
 
 #endif

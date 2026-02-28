@@ -2,7 +2,7 @@
 #include <iostream>
 #include "rand_generator.hpp"
 
-double ant::m_eps = 0.;
+double ant::m_eps = 0.8;
 
 void ant::advance( pheronome& phen, const fractal_land& land, const position_t& pos_food, const position_t& pos_nest,
                    std::size_t& cpteur_food ) 

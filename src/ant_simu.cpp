@@ -3,7 +3,6 @@
 #include <iostream>
 #include <random>
 #include "fractal_land.hpp"
-#include "ant.hpp"
 #include "pheronome.hpp"
 # include "renderer.hpp"
 # include "window.hpp"
@@ -67,7 +66,7 @@ int main(int nargs, char* argv[])
    printf( "Generation fractal  %f \n",duration); 
 
     // Définition du coefficient d'exploration de toutes les fourmis.
-    ant::set_exploration_coef(eps);
+   
     // On va créer des fourmis un peu partout sur la carte :
     auto start1=std::chrono::high_resolution_clock::now(); 
     ant_vectorised ant_colony(nb_ants); 

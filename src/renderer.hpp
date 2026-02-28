@@ -1,6 +1,5 @@
 #pragma once
 #include "fractal_land.hpp"
-#include "ant.hpp"
 #include "pheronome.hpp"
 #include "window.hpp"
 

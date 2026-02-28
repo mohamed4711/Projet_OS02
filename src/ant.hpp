@@ -12,6 +12,7 @@ public:
     /**
      * Une fourmi peut être dans deux états possibles : chargée ( elle porte de la nourriture ) ou non chargée
      */
+  
     enum state { unloaded = 0, loaded = 1 };
     ant(const position_t& pos, std::size_t seed ) : m_state(unloaded), m_position(pos)
     {} 
@@ -34,6 +35,7 @@ private:
     std::size_t m_seed ;
     state m_state      ;
     position_t m_position;
+   
 };
 
 #endif
