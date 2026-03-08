@@ -7,6 +7,7 @@ double ant::m_eps = 0.;
 void ant::advance( pheronome& phen, const fractal_land& land, const position_t& pos_food, const position_t& pos_nest,
                    std::size_t& cpteur_food ) 
 {
+    // lamba fonction = ce sont des fonctions stockées dans des variables ant_choice et dir_choice
     auto ant_choice = [this]() mutable { return rand_double( 0., 1., this->m_seed ); };
     auto dir_choice = [this]() mutable { return rand_int32( 1, 4, this->m_seed ); };
     double                                   consumed_time = 0.;
@@ -21,17 +22,20 @@ void ant::advance( pheronome& phen, const fractal_land& land, const position_t& 
                                      phen( new_pos_ant.x + 1, new_pos_ant.y )[ind_pher],
                                      phen( new_pos_ant.x, new_pos_ant.y - 1 )[ind_pher],
                                      phen( new_pos_ant.x, new_pos_ant.y + 1 )[ind_pher]} );
+        // Cas d'exploration
         if ( ( choix > m_eps ) || ( max_phen <= 0. ) ) {
             do {
                 new_pos_ant = old_pos_ant;
-                int d = dir_choice();
+                int d = dir_choice(); // choix au hasard entre 1 2 3 et 4
                 if ( d==1 ) new_pos_ant.x  -= 1;
                 if ( d==2 ) new_pos_ant.y -= 1;
                 if ( d==3 ) new_pos_ant.x  += 1;
                 if ( d==4 ) new_pos_ant.y += 1;
 
             } while ( phen[new_pos_ant][ind_pher] == -1 );
-        } else {
+        } 
+        // Cas classique : on va là ou le pheromone est le + fort
+        else {
             // On choisit la case où le phéromone est le plus fort.
             if ( phen( new_pos_ant.x - 1, new_pos_ant.y )[ind_pher] == max_phen )
                 new_pos_ant.x -= 1;
@@ -42,6 +46,7 @@ void ant::advance( pheronome& phen, const fractal_land& land, const position_t& 
             else  // if (phen(new_pos_ant.first,new_pos_ant.second+1)[ind_pher] == max_phen)
                 new_pos_ant.y += 1;
         }
+        
         consumed_time += land( new_pos_ant.x, new_pos_ant.y);
         phen.mark_pheronome( new_pos_ant );
         m_position = new_pos_ant;

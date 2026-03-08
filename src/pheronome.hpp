@@ -65,9 +65,19 @@ public:
     void do_evaporation( ) {
         for ( std::size_t i = 1; i <= m_dim; ++i )
             for ( std::size_t j = 1; j <= m_dim; ++j ) {
+                // phéromone nourriture
                 m_buffer_pheronome[i * m_stride + j][0] *= m_beta;
+                // phéromone maison
                 m_buffer_pheronome[i * m_stride + j][1] *= m_beta;
             }
+    }
+
+    // Evapore la case (i,j)
+    void evaporation_case(std::size_t i, std::size_t j){
+        // phéromone nourriture
+            m_buffer_pheronome[i * m_stride + j][0] *= m_beta;
+            // phéromone maison
+            m_buffer_pheronome[i * m_stride + j][1] *= m_beta;
     }
 
     void mark_pheronome( const position_t& pos ) {

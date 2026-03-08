@@ -10,17 +10,22 @@
 # include "../src/rand_generator.hpp"
 #include<stdio.h>
 #include <chrono>
+#include <omp.h>
 
 void advance_time( const fractal_land& land, pheronome& phen, 
                    const position_t& pos_nest, const position_t& pos_food,
                    std::vector<ant>& ants, std::size_t& cpteur, double & vapo_time, double& advance_time  )
-{   auto t1 = std::chrono::high_resolution_clock::now(); 
-
-    for ( size_t i = 0; i < ants.size(); ++i )
+{   // Avancement pour chaque fourmi
+    auto t1 = std::chrono::high_resolution_clock::now(); 
+    #pragma omp parallel for
+    for ( size_t i = 0; i < ants.size(); ++i ) {
         ants[i].advance(phen, land, pos_food, pos_nest, cpteur);// calcule le chemin et met a jour pheronome 
-    auto t2 =std::chrono::high_resolution_clock::now(); 
+    }
+    auto t2 =std::chrono::high_resolution_clock::now();
     advance_time+= std::chrono::duration<double>(t2-t1 ).count(); 
-        phen.do_evaporation();
+    
+    // Mise à jour des phéromones
+    phen.do_evaporation();
     auto t3 = std::chrono::high_resolution_clock::now(); 
     vapo_time+= std::chrono::duration<double>(t3-t2).count(); 
 
