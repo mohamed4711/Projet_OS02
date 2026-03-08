@@ -11,3 +11,14 @@ Mouvement et logique des fourmis : ~5.4 ms. Représente 90% du temps de calcul p
 
 
 Évaporation des phéromones : ~0.6 ms. Opération matricielle très rapide (10% du calcul), qui bénéficiera facilement d'une parallélisation en mémoire partagée.
+
+2) Parallélisation de l'avancement des fourmies
+A cette étape, nous avons effectué la modification : 
+#pragma omp parallel for
+    for ( size_t i = 0; i < ants.size(); ++i ) {
+        ants[i].advance(phen, land, pos_food, pos_nest, cpteur);// calcule le chemin et met a jour pheronome 
+    }
+
+Temps pour faire l'avancement de toutes les fourmies : 0.00536794
+Speed up : sans parallélisation  0.00250297
+    -> S = 0.00536794/0.00250297 = 2.14
