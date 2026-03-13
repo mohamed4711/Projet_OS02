@@ -3,9 +3,10 @@ include Make_linux.inc
 #include Make_osx.inc
 
 CXXFLAGS = -std=c++17
+MPI_CXX = $(if $(MPICXX),$(MPICXX),$(CXX))
 ifdef DEBUG
 CXXFLAGS += -g -O0 -Wall -fbounds-check -pedantic -D_GLIBCXX_DEBUG
-CXXFLAGS2 = CXXFLAGS
+CXXFLAGS2 = $(CXXFLAGS)
 else
 CXXFLAGS2 = ${CXXFLAGS} -O2 -march=native -Wall 
 CXXFLAGS += -O3 -march=native -Wall
@@ -21,17 +22,17 @@ clean:
 	@rm -fr *.o *.exe *~
 
 .cpp.o:
-	$(CXX) $(CXXFLAGS2) -c $^ -o $@	
+	$(MPI_CXX) $(CXXFLAGS2) -c $^ -o $@	
 
 ant_simu.exe : fractal_land.o renderer.o window.o ant_simu.o ant_vectorised.o
-	$(CXX) $(CXXFLAGS2) $^ -o $@ $(LIB)	
+	$(MPI_CXX) $(CXXFLAGS2) $^ -o $@ $(LIB)	
 
 help:
 	@echo "Available targets : "
 	@echo "    all            : compile all executables"
 	@echo "Add DEBUG=yes to compile in debug"
 	@echo "Configuration :"
-	@echo "    CXX      :    $(CXX)"
+	@echo "    CXX      :    $(MPI_CXX)"
 	@echo "    CXXFLAGS :    $(CXXFLAGS)"
 
 %.html: %.md

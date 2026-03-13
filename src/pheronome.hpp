@@ -62,8 +62,10 @@ public:
       return m_map_of_pheronome[index(pos)];
     }
 
-    void do_evaporation( ) {
-        for ( std::size_t i = 1; i <= m_dim; ++i )
+    void do_evaporation( std::size_t row_begin = 1, std::size_t row_end = 0 ) {
+        if ( row_end == 0 || row_end > m_dim + 1 )
+            row_end = m_dim + 1;
+        for ( std::size_t i = row_begin; i < row_end; ++i )
             for ( std::size_t j = 1; j <= m_dim; ++j ) {
                 m_buffer_pheronome[i * m_stride + j][0] *= m_beta;
                 m_buffer_pheronome[i * m_stride + j][1] *= m_beta;
@@ -103,6 +105,26 @@ public:
         cl_update( );
         m_map_of_pheronome[( m_pos_food.x + 1 ) * m_stride + m_pos_food.y + 1][0] = 1;
         m_map_of_pheronome[( m_pos_nest.x + 1 ) * m_stride + m_pos_nest.y + 1][1] = 1;
+    }
+
+    void copy_map_to_buffer( ) {
+        m_buffer_pheronome = m_map_of_pheronome;
+    }
+
+    double* buffer_data( ) {
+        return reinterpret_cast<double*>( m_buffer_pheronome.data( ) );
+    }
+
+    std::size_t double_size( ) const {
+        return 2 * m_buffer_pheronome.size( );
+    }
+
+    std::size_t stride( ) const {
+        return m_stride;
+    }
+
+    std::size_t size( ) const {
+        return m_map_of_pheronome.size( );
     }
 
 private:
