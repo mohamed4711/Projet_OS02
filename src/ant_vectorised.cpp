@@ -7,7 +7,7 @@
 
 
 void  ant_vectorised::advance( pheronome& phen, const fractal_land& land, const position_t& pos_food, const position_t& pos_nest,
-                   std::size_t& cpteur_food ,  ant_vectorised & Ant_colony ,  int id_ant ,double m_eps) 
+                   std::size_t& cpteur_food ,  ant_vectorised & Ant_colony ,  int id_ant ,double m_eps, std::vector<position_t>& visited_cells) 
     
 {    size_t m_seed=Ant_colony.fourmi_grain[id_ant]; 
     
@@ -48,7 +48,7 @@ void  ant_vectorised::advance( pheronome& phen, const fractal_land& land, const 
                 new_pos_ant.y += 1;
         }
         consumed_time += land( new_pos_ant.x, new_pos_ant.y);
-        phen.mark_pheronome( new_pos_ant );
+        visited_cells.push_back( new_pos_ant );
         Ant_colony.fourmi_pos[id_ant] = new_pos_ant;
         Ant_colony.fourmi_grain[id_ant]=m_seed; 
         if ( new_pos_ant== pos_nest ) {

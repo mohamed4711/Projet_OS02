@@ -44,7 +44,7 @@ ant_vectorised(size_t nbfourmi ): nb_fourmi(nbfourmi){
 
 
 
-void advance( pheronome& phen, const fractal_land& land, const position_t& pos_food, const position_t& pos_nest,std::size_t& cpteur_food ,  ant_vectorised & Ant_colony ,  int id_ant ,double m_eps) ; 
+void advance( pheronome& phen, const fractal_land& land, const position_t& pos_food, const position_t& pos_nest,std::size_t& cpteur_food ,  ant_vectorised & Ant_colony ,  int id_ant ,double m_eps, std::vector<position_t>& visited_cells) ; 
 /*methodes */
 
 

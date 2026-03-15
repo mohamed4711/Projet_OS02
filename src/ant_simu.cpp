@@ -15,9 +15,29 @@ void advance_time( const fractal_land& land, pheronome& phen,
                    const position_t& pos_nest, const position_t& pos_food,
                    ant_vectorised& ants , std::size_t& cpteur, double & vapo_time, double& advance_time ,double m_eps )
 {   auto t1 = std::chrono::high_resolution_clock::now(); 
+    std::vector<position_t> visited_cells;
+    std::size_t collected_food = 0;
 
-    for ( size_t i = 0; i < ants.nb_fourmi; ++i )
-      ants.advance(phen,  land, pos_food,  pos_nest,cpteur ,ants,  i , m_eps) ;  // calcule le chemin et met a jour pheronome 
+    #pragma omp parallel
+    {
+        std::vector<position_t> thread_cells;
+        std::size_t thread_food = 0;
+
+        #pragma omp for schedule(static)
+        for ( long long i = 0; i < static_cast<long long>(ants.nb_fourmi); ++i )
+            ants.advance(phen, land, pos_food, pos_nest, thread_food, ants, static_cast<int>(i), m_eps, thread_cells);
+
+        #pragma omp critical
+        {
+            collected_food += thread_food;
+            visited_cells.insert(visited_cells.end(), thread_cells.begin(), thread_cells.end());
+        }
+    }
+
+    cpteur += collected_food;
+    for ( const position_t& pos : visited_cells )
+        phen.mark_pheronome( pos );
+
     auto t2 =std::chrono::high_resolution_clock::now(); 
     advance_time+= std::chrono::duration<double>(t2-t1 ).count(); 
         phen.do_evaporation();
