@@ -24,7 +24,7 @@ void compute_chunk( int total, int rank, int size, int& begin, int& count )
 void advance_time( const fractal_land& land, pheronome& phen,
                    const position_t& pos_nest, const position_t& pos_food,
                    ant_vectorised& ants , std::size_t& cpteur, double & vapo_time,
-                   double& advance_time ,double m_eps, int rank,
+                   double& advance_time, double& communication_time, double m_eps, int rank,
                    const std::vector<int>& row_counts,
                    const std::vector<int>& row_displs,
                    std::vector<double>& phen_buffer )
@@ -37,22 +37,29 @@ void advance_time( const fractal_land& land, pheronome& phen,
     auto t2 =std::chrono::high_resolution_clock::now();
     advance_time+= std::chrono::duration<double>(t2-t1 ).count();
 
+    auto tc1 = std::chrono::high_resolution_clock::now();
     MPI_Allreduce( MPI_IN_PLACE, phen.buffer_data(), static_cast<int>( phen.double_size() ),
                    MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+    auto tc2 = std::chrono::high_resolution_clock::now();
+    communication_time += std::chrono::duration<double>(tc2-tc1).count();
     std::copy( phen.buffer_data(), phen.buffer_data() + phen.double_size(), phen_buffer.begin() );
 
     int row_width = static_cast<int>( phen.stride() ) * 2;
     int row_begin = row_displs[rank] / row_width;
     int row_count = row_counts[rank] / row_width;
-    phen.do_evaporation( row_begin, row_begin + row_count );
 
+    auto tv1 = std::chrono::high_resolution_clock::now();
+    phen.do_evaporation( row_begin, row_begin + row_count );
+    auto tv2 = std::chrono::high_resolution_clock::now();
+    vapo_time+= std::chrono::duration<double>(tv2-tv1).count();
+
+    auto tc3 = std::chrono::high_resolution_clock::now();
     MPI_Allgatherv( phen.buffer_data() + row_displs[rank], row_counts[rank], MPI_DOUBLE,
                     phen_buffer.data(), row_counts.data(), row_displs.data(),
                     MPI_DOUBLE, MPI_COMM_WORLD );
+    auto tc4 = std::chrono::high_resolution_clock::now();
+    communication_time += std::chrono::duration<double>(tc4-tc3).count();
     std::copy( phen_buffer.begin(), phen_buffer.end(), phen.buffer_data() );
-
-    auto t3 = std::chrono::high_resolution_clock::now();
-    vapo_time+= std::chrono::duration<double>(t3-t2).count();
 
     phen.update();
 }
@@ -153,10 +160,13 @@ int main(int argc, char* argv[])
     std::size_t it = 0;
     double time_calculating =0 ;
     double time_displaying =0;
+    double time_total_loop = 0;
     double advanc_time=0;
     double vapo_time=0 ;
+    double communication_time = 0;
 
     while (cont_loop) {
+        auto loop_start = std::chrono::high_resolution_clock::now();
 
         ++it;
         int keep_running = 1;
@@ -166,7 +176,10 @@ int main(int argc, char* argv[])
                     keep_running = 0;
             }
         }
+        auto tc1 = std::chrono::high_resolution_clock::now();
         MPI_Bcast( &keep_running, 1, MPI_INT, 0, MPI_COMM_WORLD );
+        auto tc2 = std::chrono::high_resolution_clock::now();
+        communication_time += std::chrono::duration<double>(tc2-tc1).count();
         if ( keep_running == 0 )
             cont_loop = false;
         if ( !cont_loop )
@@ -174,19 +187,26 @@ int main(int argc, char* argv[])
 
         auto start2=std::chrono::high_resolution_clock::now();
         advance_time( land, phen, pos_nest, pos_food, ant_colony, food_quantity,
-                      vapo_time, advanc_time ,eps, rank, row_counts, row_displs, phen_buffer );
+                      vapo_time, advanc_time, communication_time, eps,
+                      rank, row_counts, row_displs, phen_buffer );
         auto end2=std::chrono::high_resolution_clock::now();
 
         double duration2  = std::chrono::duration<double >(end2- start2).count();
         time_calculating=time_calculating+duration2;
 
         unsigned long long local_food = static_cast<unsigned long long>( food_quantity );
+        tc1 = std::chrono::high_resolution_clock::now();
         MPI_Allreduce( &local_food, &total_food_quantity, 1, MPI_UNSIGNED_LONG_LONG,
                        MPI_SUM, MPI_COMM_WORLD );
+        tc2 = std::chrono::high_resolution_clock::now();
+        communication_time += std::chrono::duration<double>(tc2-tc1).count();
 
+        tc1 = std::chrono::high_resolution_clock::now();
         MPI_Gatherv( reinterpret_cast<int*>( ant_colony.fourmi_pos.data() ), ant_counts[rank], MPI_INT,
                      rank == 0 ? reinterpret_cast<int*>( all_ant_positions.data() ) : nullptr,
                      ant_counts.data(), ant_displs.data(), MPI_INT, 0, MPI_COMM_WORLD );
+        tc2 = std::chrono::high_resolution_clock::now();
+        communication_time += std::chrono::duration<double>(tc2-tc1).count();
 
         if ( rank == 0 ) {
             renderer->display( *win, total_food_quantity );
@@ -197,6 +217,7 @@ int main(int argc, char* argv[])
         if ( rank == 0 ) {
             double duration3=std::chrono::duration<double>(end3-end2 ).count();
             time_displaying=time_displaying+duration3;
+            time_total_loop += std::chrono::duration<double>(end3-loop_start).count();
         }
 
         if ( rank == 0 && not_food_in_nest && total_food_quantity > 0 ) {
@@ -204,12 +225,16 @@ int main(int argc, char* argv[])
              std::cout << "La première nourriture est arrivée au nid a l'iteration " << it << std::endl;
              double time_cal_per_it =time_calculating/it;
              double time_disp_per_ot=time_displaying/it;
+             double time_loop_per_it = time_total_loop / it;
+             double time_comm_per_it = communication_time / it;
              vapo_time=vapo_time/it ;
              advanc_time=advanc_time/it ;
 
              std::cout<<"temps advanc_time  ="<<advanc_time<<std::endl;
              std::cout<<"temps vaporisation  ="<<vapo_time<<std::endl;
+             std::cout<<"temps communication MPI  ="<<time_comm_per_it<<std::endl;
              std::cout<<"temps calcule vapo+advancing  ="<<time_cal_per_it<<std::endl;
+             std::cout<<"temps total boucle  ="<<time_loop_per_it<<std::endl;
              std::cout<<"time per affichage ="<<time_disp_per_ot<<std::endl;
 
             not_food_in_nest = false;
