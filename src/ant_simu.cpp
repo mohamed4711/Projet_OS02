@@ -17,7 +17,7 @@ void advance_time( const fractal_land& land, pheronome& phen,
                    std::vector<ant>& ants, std::size_t& cpteur, double & vapo_time, double& advance_time  )
 {   // Avancement pour chaque fourmi
     auto t1 = std::chrono::high_resolution_clock::now(); 
-    #pragma omp parallel for
+   
     for ( size_t i = 0; i < ants.size(); ++i ) {
         ants[i].advance(phen, land, pos_food, pos_nest, cpteur);// calcule le chemin et met a jour pheronome 
     }
@@ -37,7 +37,7 @@ int main(int nargs, char* argv[])
     
     SDL_Init( SDL_INIT_VIDEO );
     std::size_t seed = 2026; // Graine pour la génération aléatoire ( reproductible )
-    const int nb_ants = 5000; // Nombre de fourmis
+    const int nb_ants = 50000; // Nombre de fourmis
     const double eps = 0.8;  // Coefficient d'exploration
     const double alpha=0.7; // Coefficient de chaos
     //const double beta=0.9999; // Coefficient d'évaporation
